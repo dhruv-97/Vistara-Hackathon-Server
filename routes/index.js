@@ -4,9 +4,6 @@ require("dotenv").config();
 var jwt = require('jsonwebtoken');
 var bcrypt = require('bcrypt');
 var User = require('../model/user');
-var twilio = require('twilio')(process.env.account_sid_twillo.toString(), process.env.auth_token_twillo.toString());
-
-
 router.get('/', function (req, res, next) {
 	// console.log(req.user);
 	res.json({

@@ -40,17 +40,17 @@ app.use(passport.initialize());
 
 require(require('path').join(__dirname, './utils/passportAuth'))(passport);
 
-// app.all('/', function(req, res, next) 
-// {     console.log("cdslkncsdc");
-//       res.header("Access-Control-Allow-Origin", "*");
-//       res.header("Access-Control-Allow-Headers", "X-Requested-With");
-//       next();
-// });
+app.all('/', function(req, res, next) 
+{     console.log("cdslkncsdc");
+      res.header("Access-Control-Allow-Origin", "*");
+      res.header("Access-Control-Allow-Headers", "X-Requested-With");
+      next();
+});
 
 app.all('*', function (req, res, next) {
   // console.log("cdslkncsdc");
   res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "POST, GET");
+  res.header("Access-Control-Allow-Methods", "POST, GET, PUT");
   res.header("Access-Control-Max-Age", "36000");
   res.header("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With,auth-token");
   // next();

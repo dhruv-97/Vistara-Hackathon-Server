@@ -3,7 +3,7 @@ var router = express.Router();
 require("dotenv").config();
 var Details = require('../model/flight');
 var unirest = require('unirest');
-
+let weathers = [27, 31, 36, 46];
 router.get('/', function (req, res, next) {
     console.log(req.user);
     res.json({
@@ -16,48 +16,20 @@ router.post('/flight', function (req, res, next) {
     // var flight_code = "6E";
     // var flight_number = "302";
     // var date = "2017/1/21";
-
-    var flight_code = req.body.flight_code;
-    var flight_number = req.body.flight_number;
-    var date = req.body.date;
-
-    var url = "https://api.flightstats.com/flex/flightstatus/rest/v2/json/flight/status/" + flight_code + "/" + flight_number + "/" + "dep/" + date + "?appId=" + process.env.appId + "&appKey=" + process.env.appKey + "&utc=false";
-    unirest.get(url)
-        .end(function (data) {
-            res.json({
-                status: true,
-                body:data.body
-            //     airline_name: data.body.appendix.airlines,
-            //     flightStatuses: data.body.flightStatuses
-            });
-        });
+    Details.findOne(req.body, function(err, detail){
+        if(err) next(err);
+        res.json(detail);
+    })
+    
 
 });
 
 router.post('/weather', function (req, res, next) {
     // var airport = "DEL";
-    var airport = req.body.airport;
-    var url = "https://api.flightstats.com/flex/weather/rest/v1/json/all/" + airport + "?appId=" + process.env.appId + "&appKey=" + process.env.appKey + "&utc=false";
-    unirest.get(url)
-        .end(function (data) {
-            if (!req.user) {
-                res.status = 401;
-                res.json({
-                    status: false,
-                    redirect: 'login',
-                    message: "Authentication Failed"
-                })
-            }
-            else {
-                if(!(data.body.metar==undefined)){
-                res.status = 200;
-                res.json({
-                    status: data.statusCode,
-                    weather: data.body.metar
-                });
-                }
-            }
-        });
+
+    res.json({
+        weather: 31
+    });
 });
 
 router.post('/nearby', function (req, res, next) {
@@ -91,7 +63,7 @@ router.post('/nearby', function (req, res, next) {
     // train_station
     // zoo
 
-    var url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=+" + lat + "," + lng + "&radius=500&type=+" + querry + "&key=" + process.env.place_api;
+    var url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=+" + lat + "," + lng + "&radius=500&type=+" + querry + "&key=AIzaSyCdsL8ZTLIXkt4YWDauPhW8cByPnz2g_ok";
     unirest.get(url)
         .end(function (data) {
             res.json({
@@ -102,71 +74,28 @@ router.post('/nearby', function (req, res, next) {
 });
 
 router.post('/addflight', function (req, res, next) {
-    if (!req.user) {
-        res.status = 401;
-        res.json({
-            status: false,
-            redirect: 'login',
-            message: "Authentication Failed"
-        })
-    } else {
-        var flight = new Details({
-            username: req.user.username,
-            flight: req.body
+    Details.create(req.body, function (err, Detail) {
+        if (err) throw(err);
+        console.log('Detail created!');
+        var id = Detail._id;
+        res.writeHead(200, {
+            'Content-Type': 'text/plain'
         });
-        console.log(flight);
-        flight.save(function (err) {
-            if (err) {
-                res.status = 401;
-                res.json({
-                    success: false,
-                    message: "Unable to save data"
-                });
-            }
-            else {
-                res.status = 200;
-                res.json({
-                    success: true,
-                    message: "Added Successfully"
-                });
-            }
-        });
-    }
+
+        res.end('Added the Detail with id: ' + id);
+    });
 });
 
-router.get('/flighthistory', function (req, res, next) {
-    if (!req.user) {
-        res.status = 401;
-        res.json({
-            status: false,
-            redirect: 'login',
-            message: "Authentication Failed"
-        })
-    } else {
-         Details.findOne({ username: req.user.username }, function (err, data) {
-            if (err) {
-                res.status = 401;
-                res.json({
-                    status: false,
-                    message: "Error"
-                });
-            } else {
-                if (data == null) {
-                    res.status = 200;
-                    res.json({
-                        status: false,
-                        message: "Not added any flight."
-                    });
-                } else {
-                    res.status = 200;
-                    res.json({
-                        status: true,
-                        data: data
-                    });
-                }
-            }
-        });
-    }
+router.put('/flight', function (req, res, next) {
+    let flightId = req.body._id;
+    Details.findByIdAndUpdate(flightId, {
+        $set: req.body
+    }, {
+        new: true
+    }, function (err, flight) {
+        if (err) next(err);
+        res.json(flight);
+    });
 });
 
 module.exports = router;
